@@ -36,7 +36,7 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.ViewHold
     public void onBindViewHolder(WeatherAdapter.ViewHolder holder, int position) {
         Weather weather = weatherList.get(position);
         holder.tvDt.setText(weather.getDt());
-        holder.tvDay.setText(weather.getDay());
+        holder.tvDay.setText(weather.getDay()+"°");
         holder.tvMain.setText(weather.getMain());
     }
 
