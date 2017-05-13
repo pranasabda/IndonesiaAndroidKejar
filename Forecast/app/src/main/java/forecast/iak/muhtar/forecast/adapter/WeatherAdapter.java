@@ -1,6 +1,7 @@
 package forecast.iak.muhtar.forecast.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +10,9 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import forecast.iak.muhtar.forecast.DetailForecastActivity;
 import forecast.iak.muhtar.forecast.R;
+import forecast.iak.muhtar.forecast.listener.ItemClickListener;
 import forecast.iak.muhtar.forecast.model.Weather;
 
 /**
@@ -34,10 +37,20 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(WeatherAdapter.ViewHolder holder, int position) {
-        Weather weather = weatherList.get(position);
+        final Weather weather = weatherList.get(position);
         holder.tvDt.setText(weather.getDt());
-        holder.tvDay.setText(weather.getDay()+"°");
+        holder.tvDay.setText(weather.getDay() + "°");
         holder.tvMain.setText(weather.getMain());
+        holder.setClickListener(new ItemClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(context, DetailForecastActivity.class);
+                intent.putExtra("temp", weather.getDay());
+                intent.putExtra("dt", weather.getDt());
+                intent.putExtra("main", weather.getMain());
+                context.startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -45,10 +58,11 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.ViewHold
         return weatherList.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView tvDt;
         TextView tvDay;
         TextView tvMain;
+        ItemClickListener itemClickListener;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -57,6 +71,16 @@ public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.ViewHold
             tvDay = (TextView) itemView.findViewById(R.id.tv_temp);
             tvMain = (TextView) itemView.findViewById(R.id.tv_main);
 
+            itemView.setOnClickListener(this);
+        }
+
+        public void setClickListener(ItemClickListener itemClickListener){
+            this.itemClickListener = itemClickListener;
+        }
+
+        @Override
+        public void onClick(View v) {
+            itemClickListener.onClick(v);
         }
     }
 }

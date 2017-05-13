@@ -1,12 +1,22 @@
 package forecast.iak.muhtar.forecast;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,12 +37,13 @@ import java.util.List;
 import forecast.iak.muhtar.forecast.adapter.WeatherAdapter;
 import forecast.iak.muhtar.forecast.model.Weather;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     private RecyclerView rvWeatherData;
     private ProgressDialog progressDialog;
     private WeatherAdapter weatherAdapter;
     private List<Weather> weatherList = new ArrayList<Weather>();
     private RecyclerView.LayoutManager layoutManager;
+    private String strLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +59,20 @@ public class MainActivity extends AppCompatActivity {
         rvWeatherData.setAdapter(weatherAdapter);
 
         new FetchWeatherData().execute();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        strLocation = sharedPreferences.getString("pref_location", "Bandung");
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        setTitle(strLocation);
+
     }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        strLocation = sharedPreferences.getString(key, "Bandung");
+        setTitle(strLocation);
+    }
+
 
     public class FetchWeatherData extends AsyncTask<Void, Void, String> {
         @Override
@@ -68,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             String strJSONWeather = null;
             try {
                 // memanggil url
-                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=Bandung&APPID=2939b4f9a70e7dd25e181b06ab14bc5d&mode=json&units=metric&cnt=5");
+                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q="+ strLocation +"&APPID=2939b4f9a70e7dd25e181b06ab14bc5d&mode=json&units=metric&cnt=5");
                 // membuat koneksi
                 httpURLConnection = (HttpURLConnection) url.openConnection();
                 httpURLConnection.setRequestMethod("GET");
@@ -113,12 +137,9 @@ public class MainActivity extends AppCompatActivity {
                 for (int i = 0; i < jsonArrayList.length(); i++) {
                     JSONObject jsonObjectList = jsonArrayList.getJSONObject(i);
                     Weather weather = new Weather();
-                    // date-time
                     weather.setDt(String.valueOf(convertDateTime(jsonObjectList.getLong("dt"))));
-                    // temp
                     JSONObject jsonObjectTemp = jsonObjectList.getJSONObject("temp");
                     weather.setDay(String.valueOf(jsonObjectTemp.getInt("day")));
-                    // main
                     JSONArray jsonArrayWeather = jsonObjectList.getJSONArray("weather");
                     for (int j = 0; j < jsonArrayWeather.length(); j++) {
                         JSONObject jsonObjectWeather = jsonArrayWeather.getJSONObject(j);
@@ -139,5 +160,23 @@ public class MainActivity extends AppCompatActivity {
             Format dateTimeFormat = new SimpleDateFormat("EEE, dd MMM");
             return dateTimeFormat.format(date);
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_setting) {
+            startActivity(new Intent(MainActivity.this, SettingActivity.class));
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
